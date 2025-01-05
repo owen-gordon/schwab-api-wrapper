@@ -20,6 +20,6 @@ from schwab_api_wrapper.utils import (
 
 from schwab_api_wrapper.schemas.trader_api import OrderRequest, TransactionType
 
-__version__ = "0.2.3"
+__version__ = "0.2.4"
 
 logging.getLogger(__name__).addHandler(NullHandler())

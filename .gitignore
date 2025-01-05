@@ -10,3 +10,4 @@ tests/sample_responses/
 redis_config.json
 .idea/
 parameters.json
+build/
