@@ -1,0 +1,6 @@
+setuptools>=69.0.2
+wheel>=0.42.0
+pytest>=8.2.2
+responses>=0.25.0
+build>=1.2.1
+twine>=5.0.0 

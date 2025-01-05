@@ -1,0 +1,55 @@
+[
+    {
+        "session": "NORMAL",
+        "duration": "DAY",
+        "orderType": "LIMIT",
+        "complexOrderStrategyType": "NONE",
+        "quantity": 100,
+        "filledQuantity": 100,
+        "remainingQuantity": 0,
+        "requestedDestination": "AUTO",
+        "destinationLinkName": "SOHO",
+        "price": 100.0,
+        "orderLegCollection": [
+            {
+                "orderLegType": "EQUITY",
+                "legId": 100,
+                "instrument": {
+                    "assetType": "EQUITY",
+                    "cusip": "000000000",
+                    "symbol": "AAPL",
+                    "instrumentId": 100
+                },
+                "instruction": "BUY",
+                "positionEffect": "OPENING",
+                "quantity": 100
+            }
+        ],
+        "orderStrategyType": "SINGLE",
+        "orderId": 100,
+        "cancelable": false,
+        "editable": false,
+        "status": "FILLED",
+        "enteredTime": "2024-01-01T12:00:00+0000",
+        "closeTime": "2024-01-01T12:00:00+0000",
+        "accountNumber": 100,
+        "orderActivityCollection": [
+            {
+                "activityType": "EXECUTION",
+                "executionType": "FILL",
+                "quantity": 100,
+                "orderRemainingQuantity": 0,
+                "executionLegs": [
+                    {
+                        "legId": 100,
+                        "quantity": 100,
+                        "mismarkedQuantity": 0,
+                        "price": 100.0,
+                        "time": "2024-01-01T12:00:00+0000",
+                        "instrumentId": 100
+                    }
+                ]
+            }
+        ]
+    }
+]

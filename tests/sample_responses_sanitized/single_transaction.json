@@ -1,0 +1,80 @@
+{
+    "activityId": 100,
+    "time": "2024-01-01T12:00:00+0000",
+    "accountNumber": "DEMO123456",
+    "type": "TRADE",
+    "status": "VALID",
+    "subAccount": "CASH",
+    "tradeDate": "2024-01-01T12:00:00+0000",
+    "positionId": 100,
+    "orderId": 100,
+    "netAmount": 0.0,
+    "transferItems": [
+        {
+            "instrument": {
+                "assetType": "CURRENCY",
+                "status": "ACTIVE",
+                "symbol": "AAPL",
+                "description": "Sample Transaction",
+                "instrumentId": 100,
+                "closingPrice": 0
+            },
+            "amount": 0,
+            "cost": 0,
+            "feeType": "COMMISSION"
+        },
+        {
+            "instrument": {
+                "assetType": "CURRENCY",
+                "status": "ACTIVE",
+                "symbol": "AAPL",
+                "description": "Sample Transaction",
+                "instrumentId": 100,
+                "closingPrice": 0
+            },
+            "amount": 0,
+            "cost": 0,
+            "feeType": "SEC_FEE"
+        },
+        {
+            "instrument": {
+                "assetType": "CURRENCY",
+                "status": "ACTIVE",
+                "symbol": "AAPL",
+                "description": "Sample Transaction",
+                "instrumentId": 100,
+                "closingPrice": 0
+            },
+            "amount": 0,
+            "cost": 0,
+            "feeType": "OPT_REG_FEE"
+        },
+        {
+            "instrument": {
+                "assetType": "CURRENCY",
+                "status": "ACTIVE",
+                "symbol": "AAPL",
+                "description": "Sample Transaction",
+                "instrumentId": 100,
+                "closingPrice": 0
+            },
+            "amount": 0,
+            "cost": 0,
+            "feeType": "TAF_FEE"
+        },
+        {
+            "instrument": {
+                "assetType": "EQUITY",
+                "status": "ACTIVE",
+                "symbol": "AAPL",
+                "instrumentId": 100,
+                "closingPrice": 100.0,
+                "type": "COMMON_STOCK"
+            },
+            "amount": 100,
+            "cost": 0.0,
+            "price": 100.0,
+            "positionEffect": "OPENING"
+        }
+    ]
+}

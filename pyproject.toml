@@ -1,25 +1,51 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel", "pip>=21.3"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["schwab_api_wrapper*"]
 
 [project]
 name = "schwab_api_wrapper"
-version = "0.2.3"
+version = "0.2.4"
 authors = [
   { name="Owen Gordon", email="owengordon330@outlook.com" },
 ]
 description = "A wrapper package around the schwab http api"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "annotated-types>=0.6.0",
+    "build>=1.2.1",
+    "certifi>=2024.2.2",
+    "cffi>=1.16.0",
+    "charset-normalizer>=3.3.2",
+    "click>=8.1.7",
+    "cryptography>=42.0.8",
+    "devtools>=0.12.2",
+    "hiredis>=2.3.2",
+    "pydantic>=2.7.1",
+    "redis>=5.0.5",
+    "requests>=2.31.0",
+    "responses>=0.25.0",
+    "PyYAML>=6.0.1"
+]
 
 [project.urls]
-Homepage = "https://github.com/OwenGordon/schwab-api-wrapper"
-Issues = "https://github.com/OwenGordon/schwab-api-wrapper/issues"
+Homepage = "https://github.com/owen-gordon/schwab-api-wrapper"
+Issues = "https://github.com/owen-gordon/schwab-api-wrapper/issues"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
