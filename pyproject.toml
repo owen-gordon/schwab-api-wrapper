@@ -1,6 +1,13 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel", "pip>=21.3"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["schwab_api_wrapper*"]
 
 [project]
 name = "schwab_api_wrapper"

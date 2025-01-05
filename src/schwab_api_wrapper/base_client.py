@@ -266,10 +266,29 @@ class BaseClient(ABC):
         self.refresh_token = parameters[KEY_TOKEN_REFRESH]
         self.access_token = parameters[KEY_TOKEN_ACCESS]
         self.id_token = parameters[KEY_TOKEN_ID]
-        self.refresh_token_valid_until = datetime.fromisoformat(
+        
+        # Truncate microseconds to 6 digits and handle both Z and +00:00 timezone formats
+        def parse_datetime(dt_str: str) -> datetime:
+            # Replace Z with +00:00 if present
+            dt_str = dt_str.replace('Z', '+00:00')
+            # Find the position of + or - in timezone
+            tz_pos = dt_str.rfind('+') if '+' in dt_str else dt_str.rfind('-')
+            if tz_pos == -1:
+                tz_pos = len(dt_str)
+            # Split into main part and timezone
+            main_part = dt_str[:tz_pos]
+            tz_part = dt_str[tz_pos:] if tz_pos < len(dt_str) else ''
+            # Truncate microseconds if needed
+            if '.' in main_part:
+                base, ms = main_part.split('.')
+                ms = ms[:6]  # Truncate to 6 digits
+                main_part = f"{base}.{ms}"
+            return datetime.fromisoformat(main_part + tz_part)
+
+        self.refresh_token_valid_until = parse_datetime(
             parameters[KEY_REFRESH_TOKEN_VALID_UNTIL]
         )
-        self.access_token_valid_until = datetime.fromisoformat(
+        self.access_token_valid_until = parse_datetime(
             parameters[KEY_ACCESS_TOKEN_VALID_UNTIL]
         )
 

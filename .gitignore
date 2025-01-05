@@ -11,3 +11,9 @@ redis_config.json
 .idea/
 parameters.json
 build/
+
+# Sample response files with real data
+tests/sample_responses/*.json
+
+# Keep sanitized versions
+!tests/sample_responses_sanitized/*.json

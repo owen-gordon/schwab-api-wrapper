@@ -60,9 +60,10 @@ class TestSchwabAPI(unittest.TestCase):
     @patch("builtins.open", new_callable=mock_open, read_data=json.dumps(fake_json))
     def setUp(self, mock_file) -> None:  # mock_file is required for the @patch wrapper
         self.api = FileClient(PARAMETERS_FILE_NAME, immediate_refresh=False)
-        self.encrypted_account_number = "encrypted_account_number"
-        self.order_id = 1324354657
+        self.encrypted_account_number = "DEMO123456"
+        self.order_id = 12345678
         self.transaction_id = 20240424145200
+        self.sample_dir = Path(os.path.dirname(__file__)) / "sample_responses_sanitized"
 
     @patch("builtins.open", new_callable=mock_open, read_data=json.dumps(fake_json))
     @responses.activate
@@ -205,9 +206,7 @@ class TestSchwabAPI(unittest.TestCase):
             QUOTES_URL,
             json=json.load(
                 open(
-                    Path(os.path.dirname(__file__))
-                    / "sample_responses"
-                    / "quotes.json",
+                    self.sample_dir / "quotes.json",
                     "r",
                 )
             ),
@@ -304,9 +303,7 @@ class TestSchwabAPI(unittest.TestCase):
             MARKET_HOURS_URL,
             json=json.load(
                 open(
-                    Path(os.path.dirname(__file__))
-                    / "sample_responses"
-                    / "market_hours.json",
+                    self.sample_dir / "market_hours.json",
                     "r",
                 )
             ),
@@ -493,9 +490,7 @@ class TestSchwabAPI(unittest.TestCase):
             ACCOUNTS_URL,
             json=json.load(
                 open(
-                    Path(os.path.dirname(__file__))
-                    / "sample_responses"
-                    / "accounts.json",
+                    self.sample_dir / "accounts.json",
                     "r",
                 )
             ),
@@ -513,9 +508,7 @@ class TestSchwabAPI(unittest.TestCase):
             f"{ACCOUNTS_URL}/{self.encrypted_account_number}",
             json=json.load(
                 open(
-                    Path(os.path.dirname(__file__))
-                    / "sample_responses"
-                    / "single_account.json",
+                    self.sample_dir / "single_account.json",
                     "r",
                 )
             ),
@@ -717,9 +710,7 @@ class TestSchwabAPI(unittest.TestCase):
             ORDERS_URL,
             json=json.load(
                 open(
-                    Path(os.path.dirname(__file__))
-                    / "sample_responses"
-                    / "all_orders.json",
+                    self.sample_dir / "all_orders.json",
                     "r",
                 )
             ),
@@ -760,9 +751,7 @@ class TestSchwabAPI(unittest.TestCase):
             f"{TRADER_API_ENDPOINT}/accounts/{self.encrypted_account_number}/orders",
             json=json.load(
                 open(
-                    Path(os.path.dirname(__file__))
-                    / "sample_responses"
-                    / "all_orders.json",
+                    self.sample_dir / "all_orders.json",
                     "r",
                 )
             ),
@@ -797,7 +786,7 @@ class TestSchwabAPI(unittest.TestCase):
             f"{TRADER_API_ENDPOINT}/accounts/{self.encrypted_account_number}/orders/{self.order_id}",
             json=json.load(
                 open(
-                    Path(os.path.dirname(__file__)) / "sample_responses" / "order.json",
+                    self.sample_dir / "order.json",
                     "r",
                 )
             ),
@@ -842,7 +831,7 @@ class TestSchwabAPI(unittest.TestCase):
             f"{TRADER_API_ENDPOINT}/accounts/{self.encrypted_account_number}/orders/{self.order_id}",
             json=json.load(
                 open(
-                    Path(os.path.dirname(__file__)) / "sample_responses" / "order.json",
+                    self.sample_dir / "order.json",
                     "r",
                 )
             ),
@@ -1087,7 +1076,7 @@ class TestSchwabAPI(unittest.TestCase):
             f"{TRADER_API_ENDPOINT}/accounts/{self.encrypted_account_number}/orders/{self.order_id}",
             json=json.load(
                 open(
-                    Path(os.path.dirname(__file__)) / "sample_responses" / "order.json",
+                    self.sample_dir / "order.json",
                     "r",
                 )
             ),
@@ -1157,7 +1146,7 @@ class TestSchwabAPI(unittest.TestCase):
             f"{TRADER_API_ENDPOINT}/accounts/{self.encrypted_account_number}/previewOrder",
             json=json.load(
                 open(
-                    Path(os.path.dirname(__file__)) / "sample_responses" / "order.json",
+                    self.sample_dir / "order.json",
                     "r",
                 )
             ),
@@ -1227,9 +1216,7 @@ class TestSchwabAPI(unittest.TestCase):
             f"{TRADER_API_ENDPOINT}/accounts/{self.encrypted_account_number}/transactions",
             json=json.load(
                 open(
-                    Path(os.path.dirname(__file__))
-                    / "sample_responses"
-                    / "transactions.json",
+                    self.sample_dir / "transactions.json",
                     "r",
                 )
             ),
@@ -1254,9 +1241,7 @@ class TestSchwabAPI(unittest.TestCase):
             f"{TRADER_API_ENDPOINT}/accounts/{self.encrypted_account_number}/transactions",
             json=json.load(
                 open(
-                    Path(os.path.dirname(__file__))
-                    / "sample_responses"
-                    / "multi_type_transactions.json",
+                    self.sample_dir / "multi_type_transactions.json",
                     "r",
                 )
             ),
@@ -1354,9 +1339,7 @@ class TestSchwabAPI(unittest.TestCase):
             f"{TRADER_API_ENDPOINT}/accounts/{self.encrypted_account_number}/transactions/{self.transaction_id}",
             json=json.load(
                 open(
-                    Path(os.path.dirname(__file__))
-                    / "sample_responses"
-                    / "single_transaction.json",
+                    self.sample_dir / "single_transaction.json",
                     "r",
                 )
             ),
@@ -1440,9 +1423,7 @@ class TestSchwabAPI(unittest.TestCase):
             INSTRUMENTS_URL,
             json=json.load(
                 open(
-                    Path(os.path.dirname(__file__))
-                    / "sample_responses"
-                    / "instruments_fundamentals.json",
+                    self.sample_dir / "instruments_fundamentals.json",
                     "r",
                 )
             ),
