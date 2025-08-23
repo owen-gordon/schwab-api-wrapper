@@ -8,7 +8,7 @@ from typing import Union
 from collections.abc import Iterable
 import logging
 from devtools import pformat
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 from zoneinfo import ZoneInfo
 
 from .response_aware_retry import ResponseAwareRetry
@@ -85,6 +85,10 @@ class BaseClient(ABC):
     token_filter = TokenCensorFilter()
     logging.getLogger(__name__).addFilter(token_filter)
 
+    # Optional override for the base URL host. When set (e.g., to an outbound-auth-proxy),
+    # all API absolute URLs will be rewritten to use this base while preserving the path.
+    base_override: str | None = None
+
     def assert_refresh_token_not_expired(self, renew_refresh_token) -> None:
         if (
             not renew_refresh_token
@@ -120,6 +124,21 @@ class BaseClient(ABC):
             "Authorization": f"Bearer {self.access_token}",
         }
 
+    def _url(self, absolute_url: str) -> str:
+        """
+        Optionally rewrite an absolute Schwab API URL to use a different base (e.g., proxy).
+        Keeps the original path and query string.
+        """
+        if not self.base_override:
+            return absolute_url
+
+        parsed = urlparse(absolute_url)
+        base = self.base_override.rstrip("/")
+        path = parsed.path
+        if parsed.query:
+            return f"{base}{path}?{parsed.query}"
+        return f"{base}{path}"
+
     def get_refresh_token_expiration(self) -> datetime:
         return self.refresh_token_valid_until
 
@@ -154,10 +173,11 @@ class BaseClient(ABC):
             "App Authorization Params:\n" + pformat(params)
         )
 
-        response = self.__get(AUTH_URL, params=params)
+        url = self._url(AUTH_URL)
+        response = self.__get(url, params=params)
 
         logging.getLogger(__name__).info(
-            f"Schwab API | GET `{AUTH_URL}` | Status: {response.status_code}"
+            f"Schwab API | GET `{url}` | Status: {response.status_code}"
         )
 
         assert (
@@ -194,14 +214,15 @@ class BaseClient(ABC):
         return self.__get_token(payload)
 
     def __get_token(self, payload) -> tuple[Optional[Token], Optional[OAuthError]]:
+        url = self._url(TOKEN_URL)
         response = requests.post(
-            TOKEN_URL,
+            url,
             auth=HTTPBasicAuth(username=self.client_id, password=self.client_secret),
             data=payload,
         )
 
         logging.getLogger(__name__).info(
-            f"Schwab API | POST `{TOKEN_URL}` | Status: {response.status_code}"
+            f"Schwab API | POST `{url}` | Status: {response.status_code}"
         )
 
         if response.status_code == STATUS_CODE_OK:
@@ -266,21 +287,21 @@ class BaseClient(ABC):
         self.refresh_token = parameters[KEY_TOKEN_REFRESH]
         self.access_token = parameters[KEY_TOKEN_ACCESS]
         self.id_token = parameters[KEY_TOKEN_ID]
-        
+
         # Truncate microseconds to 6 digits and handle both Z and +00:00 timezone formats
         def parse_datetime(dt_str: str) -> datetime:
             # Replace Z with +00:00 if present
-            dt_str = dt_str.replace('Z', '+00:00')
+            dt_str = dt_str.replace("Z", "+00:00")
             # Find the position of + or - in timezone
-            tz_pos = dt_str.rfind('+') if '+' in dt_str else dt_str.rfind('-')
+            tz_pos = dt_str.rfind("+") if "+" in dt_str else dt_str.rfind("-")
             if tz_pos == -1:
                 tz_pos = len(dt_str)
             # Split into main part and timezone
             main_part = dt_str[:tz_pos]
-            tz_part = dt_str[tz_pos:] if tz_pos < len(dt_str) else ''
+            tz_part = dt_str[tz_pos:] if tz_pos < len(dt_str) else ""
             # Truncate microseconds if needed
-            if '.' in main_part:
-                base, ms = main_part.split('.')
+            if "." in main_part:
+                base, ms = main_part.split(".")
                 ms = ms[:6]  # Truncate to 6 digits
                 main_part = f"{base}.{ms}"
             return datetime.fromisoformat(main_part + tz_part)
@@ -385,12 +406,11 @@ class BaseClient(ABC):
 
         logging.getLogger(__name__).debug("Quotes Params:\n" + pformat(params))
 
-        response = self.__get(
-            QUOTES_URL, params=params, headers=self.headers, retry=retry
-        )
+        url = self._url(QUOTES_URL)
+        response = self.__get(url, params=params, headers=self.headers, retry=retry)
 
         logging.getLogger(__name__).info(
-            f"Schwab API | GET `{QUOTES_URL}` | Status: {response.status_code}"
+            f"Schwab API | GET `{url}` | Status: {response.status_code}"
         )
 
         logging.getLogger(__name__).debug("Response JSON:\n" + pformat(response.json()))
@@ -416,12 +436,11 @@ class BaseClient(ABC):
 
         logging.getLogger(__name__).debug("Instruments Params:\n" + pformat(params))
 
-        response = self.__get(
-            INSTRUMENTS_URL, params=params, headers=self.headers, retry=retry
-        )
+        url = self._url(INSTRUMENTS_URL)
+        response = self.__get(url, params=params, headers=self.headers, retry=retry)
 
         logging.getLogger(__name__).info(
-            f"Schwab API | GET `{INSTRUMENTS_URL}` | Status: {response.status_code}"
+            f"Schwab API | GET `{url}` | Status: {response.status_code}"
         )
 
         logging.getLogger(__name__).debug("Response JSON:\n" + pformat(response.json()))
@@ -474,12 +493,11 @@ class BaseClient(ABC):
 
         logging.getLogger(__name__).debug("Market Hours Params:\n" + pformat(params))
 
-        response = self.__get(
-            MARKET_HOURS_URL, params=params, headers=self.headers, retry=retry
-        )
+        url = self._url(MARKET_HOURS_URL)
+        response = self.__get(url, params=params, headers=self.headers, retry=retry)
 
         logging.getLogger(__name__).info(
-            f"Schwab API | GET `{MARKET_HOURS_URL}` | Status: {response.status_code}"
+            f"Schwab API | GET `{url}` | Status: {response.status_code}"
         )
 
         logging.getLogger(__name__).debug("Response JSON:\n" + pformat(response.json()))
@@ -526,12 +544,11 @@ class BaseClient(ABC):
             "Single Market Hours Params:\n" + pformat(params)
         )
 
-        response = self.__get(
-            single_market_hours_url, params=params, headers=self.headers, retry=retry
-        )
+        url = self._url(single_market_hours_url)
+        response = self.__get(url, params=params, headers=self.headers, retry=retry)
 
         logging.getLogger(__name__).info(
-            f"Schwab API | GET `{single_market_hours_url}` | Status: {response.status_code}"
+            f"Schwab API | GET `{url}` | Status: {response.status_code}"
         )
 
         logging.getLogger(__name__).debug("Response JSON:\n" + pformat(response.json()))
@@ -583,12 +600,11 @@ class BaseClient(ABC):
 
         logging.getLogger(__name__).debug("Price History Params:\n" + pformat(params))
 
-        response = self.__get(
-            PRICE_HISTORY_URL, params=params, headers=self.headers, retry=retry
-        )
+        url = self._url(PRICE_HISTORY_URL)
+        response = self.__get(url, params=params, headers=self.headers, retry=retry)
 
         logging.getLogger(__name__).info(
-            f"Schwab API | GET `{PRICE_HISTORY_URL}` | Status: {response.status_code}"
+            f"Schwab API | GET `{url}` | Status: {response.status_code}"
         )
 
         logging.getLogger(__name__).debug("Response JSON:\n" + pformat(response.json()))
@@ -609,10 +625,11 @@ class BaseClient(ABC):
         and use encrypted account values for all subsequent calls for any accountNumber request.
         """
 
-        response = self.__get(ACCOUNT_NUMBERS_URL, headers=self.headers, retry=retry)
+        url = self._url(ACCOUNT_NUMBERS_URL)
+        response = self.__get(url, headers=self.headers, retry=retry)
 
         logging.getLogger(__name__).info(
-            f"Schwab API | GET `{ACCOUNT_NUMBERS_URL}` | Status: {response.status_code}"
+            f"Schwab API | GET `{url}` | Status: {response.status_code}"
         )
 
         logging.getLogger(__name__).debug("Response JSON:\n" + pformat(response.json()))
@@ -643,12 +660,11 @@ class BaseClient(ABC):
 
         logging.getLogger(__name__).debug("Accounts Params:\n" + pformat(params))
 
-        response = self.__get(
-            ACCOUNTS_URL, params=params, headers=self.headers, retry=retry
-        )
+        url = self._url(ACCOUNTS_URL)
+        response = self.__get(url, params=params, headers=self.headers, retry=retry)
 
         logging.getLogger(__name__).info(
-            f"Schwab API | GET `{ACCOUNTS_URL}` | Status: {response.status_code}"
+            f"Schwab API | GET `{url}` | Status: {response.status_code}"
         )
 
         logging.getLogger(__name__).debug("Response JSON:\n" + pformat(response.json()))
@@ -683,12 +699,11 @@ class BaseClient(ABC):
 
         logging.getLogger(__name__).debug("Single Account Params:\n" + pformat(params))
 
-        response = self.__get(
-            account_url, params=params, headers=self.headers, retry=retry
-        )
+        url = self._url(account_url)
+        response = self.__get(url, params=params, headers=self.headers, retry=retry)
 
         logging.getLogger(__name__).info(
-            f"Schwab API | GET `{account_url}` | Status: {response.status_code}"
+            f"Schwab API | GET `{url}` | Status: {response.status_code}"
         )
 
         logging.getLogger(__name__).debug("Response JSON:\n" + pformat(response.json()))
@@ -739,10 +754,11 @@ class BaseClient(ABC):
 
         logging.getLogger(__name__).debug("Get All Orders Params:\n" + pformat(params))
 
-        response = self.__get(ORDERS_URL, params=params, headers=self.headers)
+        url = self._url(ORDERS_URL)
+        response = self.__get(url, params=params, headers=self.headers)
 
         logging.getLogger(__name__).info(
-            f"Schwab API | GET `{ORDERS_URL}` | Status: {response.status_code}"
+            f"Schwab API | GET `{url}` | Status: {response.status_code}"
         )
 
         logging.getLogger(__name__).debug("Response JSON:\n" + pformat(response.json()))
@@ -797,6 +813,7 @@ class BaseClient(ABC):
 
         logging.getLogger(__name__).debug("Get All Orders Params:\n" + pformat(params))
 
+        url = self._url(url)
         response = self.__get(url, params=params, headers=self.headers)
 
         logging.getLogger(__name__).info(
@@ -821,7 +838,7 @@ class BaseClient(ABC):
         """
 
         url = f"{TRADER_API_ENDPOINT}/accounts/{encrypted_account_number}/orders/{order_id}"
-
+        url = self._url(url)
         response = self.__get(url, headers=self.headers)
 
         logging.getLogger(__name__).info(
@@ -852,6 +869,7 @@ class BaseClient(ABC):
             + pformat(order_request.model_dump(mode="json", exclude_none=True))
         )
 
+        url = self._url(url)
         response = self.session.post(
             url,
             json=order_request.model_dump(mode="json", exclude_none=True),
@@ -893,7 +911,7 @@ class BaseClient(ABC):
         """
 
         url = f"{TRADER_API_ENDPOINT}/accounts/{encrypted_account_number}/orders/{order_id}"
-
+        url = self._url(url)
         response = self.session.delete(url, headers=self.headers)
 
         logging.getLogger(__name__).info(
@@ -926,6 +944,7 @@ class BaseClient(ABC):
             + pformat(order_request.model_dump(mode="json", exclude_none=True))
         )
 
+        url = self._url(url)
         response = self.session.put(
             url,
             json=order_request.model_dump(mode="json", exclude_none=True),
@@ -973,6 +992,7 @@ class BaseClient(ABC):
             + pformat(order_request.model_dump(mode="json", exclude_none=True))
         )
 
+        url = self._url(url)
         response = self.session.post(
             url,
             json=order_request.model_dump(mode="json", exclude_none=True),
@@ -1032,6 +1052,7 @@ class BaseClient(ABC):
             "Get Transactions Params:\n" + pformat(params)
         )
 
+        url = self._url(url)
         response = self.__get(url, params=params, headers=self.headers)
 
         logging.getLogger(__name__).info(
@@ -1059,7 +1080,7 @@ class BaseClient(ABC):
         """
 
         url = f"{TRADER_API_ENDPOINT}/accounts/{encrypted_account_number}/transactions/{transaction_id}"
-
+        url = self._url(url)
         response = self.__get(url, headers=self.headers)
 
         logging.getLogger(__name__).info(
