@@ -8,6 +8,7 @@ Makefile
 schwab_api_wrapper.egg-info/
 tests/sample_responses/
 redis_config.json
+redis_config.backup.json
 .idea/
 parameters.json
 build/
@@ -17,3 +18,5 @@ tests/sample_responses/*.json
 
 # Keep sanitized versions
 !tests/sample_responses_sanitized/*.json
+
+filingpulse-redis-ca.crt

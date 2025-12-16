@@ -7,6 +7,9 @@ KEY_REDIS_HOST = "host"
 KEY_REDIS_PORT = "port"
 KEY_REDIS_PASSWORD = "password"
 KEY_REDIS_ENCRYPTION_KEY = "encryption_key"
+KEY_REDIS_CA_CERT_PATH = "ca_cert_path"
+KEY_REDIS_SSL = "ssl"
+KEY_REDIS_SSL_VERIFY = "ssl_verify"
 
 
 KEY_CLIENT_ID = "client_id"

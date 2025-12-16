@@ -5,6 +5,7 @@ from cryptography.fernet import Fernet
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import responses
+import ssl
 
 from schwab_api_wrapper import RedisClient, Token, OAuthException
 from schwab_api_wrapper.utils import *
@@ -45,6 +46,7 @@ class TestRedisClient(unittest.TestCase):
         )
 
         key = Fernet.generate_key()
+        self.fernet_key = key
 
         # Mock reading from a file
         self.patcher = patch(
@@ -89,6 +91,9 @@ class TestRedisClient(unittest.TestCase):
         client = RedisClient("dummy_path")
         self.mock_file.assert_called_once_with("dummy_path", "r")
         self.assertTrue(client.redis)
+        # Default config in setUp does not include CA cert path or explicit ssl keys => plaintext
+        _, kwargs = self.mock_redis_constructor.call_args
+        self.assertNotIn("ssl", kwargs)
 
     @responses.activate
     def test_encrypt_decrypt_token(self):
@@ -132,6 +137,61 @@ class TestRedisClient(unittest.TestCase):
         with self.assertRaises(OAuthException):
             # Call the method under test
             client.refresh()
+
+    @responses.activate
+    def test_tls_enabled_explicit_without_ca_uses_system_store(self):
+        config = {
+            KEY_REDIS_HOST: "localhost",
+            KEY_REDIS_PORT: 6379,
+            KEY_REDIS_PASSWORD: "password",
+            KEY_REDIS_ENCRYPTION_KEY: self.fernet_key.decode(),
+            KEY_REDIS_SSL: True,
+            KEY_REDIS_SSL_VERIFY: True,
+        }
+
+        with patch("builtins.open", mock_open(read_data=json.dumps(config))):
+            RedisClient("dummy_path")
+
+        _, kwargs = self.mock_redis_constructor.call_args
+        self.assertTrue(kwargs.get("ssl"))
+        self.assertEqual(kwargs.get("ssl_cert_reqs"), ssl.CERT_REQUIRED)
+        self.assertNotIn("ssl_ca_certs", kwargs)
+
+    @responses.activate
+    def test_tls_enabled_without_verification(self):
+        config = {
+            KEY_REDIS_HOST: "localhost",
+            KEY_REDIS_PORT: 6379,
+            KEY_REDIS_PASSWORD: "password",
+            KEY_REDIS_ENCRYPTION_KEY: self.fernet_key.decode(),
+            KEY_REDIS_SSL: True,
+            KEY_REDIS_SSL_VERIFY: False,
+        }
+
+        with patch("builtins.open", mock_open(read_data=json.dumps(config))):
+            RedisClient("dummy_path")
+
+        _, kwargs = self.mock_redis_constructor.call_args
+        self.assertTrue(kwargs.get("ssl"))
+        self.assertEqual(kwargs.get("ssl_cert_reqs"), ssl.CERT_NONE)
+        self.assertEqual(kwargs.get("ssl_check_hostname"), False)
+
+    @responses.activate
+    def test_ssl_false_forces_plaintext_even_with_ca_cert_path(self):
+        config = {
+            KEY_REDIS_HOST: "localhost",
+            KEY_REDIS_PORT: 6379,
+            KEY_REDIS_PASSWORD: "password",
+            KEY_REDIS_ENCRYPTION_KEY: self.fernet_key.decode(),
+            KEY_REDIS_SSL: False,
+            KEY_REDIS_CA_CERT_PATH: "ca.crt",
+        }
+
+        with patch("builtins.open", mock_open(read_data=json.dumps(config))):
+            RedisClient("dummy_path")
+
+        _, kwargs = self.mock_redis_constructor.call_args
+        self.assertNotIn("ssl", kwargs)
 
 
 if __name__ == "__main__":
