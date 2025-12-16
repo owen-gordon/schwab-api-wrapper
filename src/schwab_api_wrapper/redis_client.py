@@ -2,9 +2,20 @@ import json
 import redis
 from cryptography.fernet import Fernet
 
-from .utils import *
+from .utils import (
+    KEY_REDIS_HOST,
+    KEY_REDIS_PORT,
+    KEY_REDIS_PASSWORD,
+    KEY_REDIS_ENCRYPTION_KEY,
+    KEY_REDIS_CA_CERT_PATH,
+    KEY_REDIS_SSL,
+    KEY_REDIS_SSL_VERIFY,
+)
 from .base_client import BaseClient
 from schwab_api_wrapper.schemas.oauth import Token
+import ssl
+
+import logging
 
 
 class RedisClient(BaseClient):
@@ -37,11 +48,49 @@ class RedisClient(BaseClient):
             self.refresh()
 
     def create_redis_client(self) -> redis.Redis:
-        return redis.Redis(
-            host=self.redis_parameters[KEY_REDIS_HOST],
-            port=self.redis_parameters[KEY_REDIS_PORT],
-            password=self.redis_parameters[KEY_REDIS_PASSWORD],
+        logger = logging.getLogger(__name__)
+
+        ca_cert_path = self.redis_parameters.get(KEY_REDIS_CA_CERT_PATH)
+
+        use_ssl = self.redis_parameters.get(KEY_REDIS_SSL)
+        ssl_verify = self.redis_parameters.get(KEY_REDIS_SSL_VERIFY)
+
+        redis_kwargs: dict = {
+            "host": self.redis_parameters[KEY_REDIS_HOST],
+            "port": self.redis_parameters[KEY_REDIS_PORT],
+            "password": self.redis_parameters[KEY_REDIS_PASSWORD],
+        }
+
+        if not use_ssl:
+            logger.info("Creating Redis client without SSL (plaintext connection)")
+            return redis.Redis(**redis_kwargs)
+
+        # TLS enabled
+        redis_kwargs["ssl"] = True
+
+        if ssl_verify:
+            if ca_cert_path:
+                logger.info(
+                    "Creating Redis client with SSL (certificate verification enabled) and CA certificate path: %s",
+                    ca_cert_path,
+                )
+                redis_kwargs["ssl_ca_certs"] = ca_cert_path
+            else:
+                logger.info(
+                    "Creating Redis client with SSL (certificate verification enabled) using system CA store"
+                )
+
+            redis_kwargs["ssl_cert_reqs"] = ssl.CERT_REQUIRED
+            return redis.Redis(**redis_kwargs)
+
+        # TLS enabled but verification disabled (insecure)
+        logger.warning(
+            "Creating Redis client with SSL but certificate verification is DISABLED (ssl_verify=false). "
+            "This is insecure and vulnerable to man-in-the-middle attacks. Use only in local/dev or trusted networks."
         )
+        redis_kwargs["ssl_cert_reqs"] = ssl.CERT_NONE
+        redis_kwargs["ssl_check_hostname"] = False
+        return redis.Redis(**redis_kwargs)
 
     def get_encryption_key(self) -> bytes:
         return self.redis_parameters[KEY_REDIS_ENCRYPTION_KEY].encode()
