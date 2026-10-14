@@ -1,12 +1,16 @@
 import json
 import logging
 import threading
+import time
 from typing import Optional
 
 import requests
 
 from schwab_api_wrapper.schemas.oauth import Token
 from .base_client import BaseClient
+
+# Pause between stream reconnects so TAS being down or restarting never becomes a hot loop.
+STREAM_RETRY_SECS = 2
 
 
 class TokenAuthorityClient(BaseClient):
@@ -120,6 +124,8 @@ class TokenAuthorityClient(BaseClient):
                 logging.getLogger(__name__).warning(
                     f"Token stream disconnected, retrying: {ex}"
                 )
+            finally:
+                time.sleep(STREAM_RETRY_SECS)
 
     @staticmethod
     def _parse_sse_data(raw: str) -> Optional[dict]:
